@@ -14,13 +14,13 @@ Sample:
 ```
 #!python
 
->>> import dbhelper
+>>> from zoidberg import database
 >>> import dataformatters as df
->>> master = dbhelper.DataBase('master')  # Connection string name from the ini file
+>>> master = database.connect('master')  # Connection string name from the ini file, or a entire conn string
 >>> master.dbo.sp <TAB>
 db.dbo.spt_fallback_db  db.dbo.spt_fallback_usg db.dbo.spt_values
 db.dbo.spt_fallback_dev db.dbo.spt_monitor
->>>result = dbo.spt_monitor.select()
+>>>result = db.dbo.spt_monitor.From().go()
 >>>df.to_html(result)
 Creating and opening temp file C:\Users\smonia\AppData\Local\Temp\tmpn3g43ppp.htm
 >>>df.to_csv(result)
@@ -35,8 +35,8 @@ Both HTML and CSV options create a temp file and use os.startfile (in Windows yo
 
 Known issues (help/guidance appreciated!): 
 
-* Must be converted to a real package (to auto install dependencies, etc.)
-* Improve query interface (in progress)
+* Package configuration is not completed. After we will be able to publish to PyPI!
+* The API for querying needs a few tweaks. Suggestions are welcome.
 * Decide on other SQL features to support beyond querying (UPDATES, INSERTS, etc, would it make sense?)
 
 
