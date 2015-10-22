@@ -1,7 +1,7 @@
 ﻿import pypyodbc
 from collections import namedtuple
-from dbobjects import Schema, Table
-from querybuilder import QueryBuilder
+from .dbobjects import Schema, Table
+from .querybuilder import QueryBuilder
 import configparser
 import sys
 

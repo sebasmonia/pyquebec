@@ -1,4 +1,4 @@
-from dbobjects import Table, Column
+from .dbobjects import Table, Column
 import configparser
 import sys
 
