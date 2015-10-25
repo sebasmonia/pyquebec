@@ -1,4 +1,0 @@
-include *.txt LICENSE
-recursive-include tests *.ini
-recursive-include 
-prune docs/_build
