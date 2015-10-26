@@ -1,21 +1,21 @@
 from setuptools import setup
 
 setup(
-    name = 'zoidberg',
-    packages = ['zoidberg'],
+    name = 'pyquebec',
+    packages = ['pyquebec'],
     version = '0.5.0',
     description = 'A Python package to create simple SQL queries from the console, and quickly display the returned information.',
     author='Sebastián Monía',
     author_email='smonia@outlook.com',
     license='MIT',
-    url='https://github.com/sebasmonia/zoidberg',
+    url='https://github.com/sebasmonia/pyquebec',
     install_requires=[
         'pypyodbc',
         'tabulate'],
     keywords='SQL development console MSSQL',
     package_data = { 
                     '' : ['*.txt', '*.md'],
-                    'zoidberg' : ['*.ini', '*.template', 'resources/*.*']
+                    'pyquebec' : ['*.ini', '*.template', 'resources/*.*']
                    },
     classifiers=[
         'Programming Language :: Python',

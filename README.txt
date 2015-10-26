@@ -2,22 +2,22 @@ Helper to consume a database from the REPL.
 
 Dependencies:
 
-1) pypyodbc
-2) tabulate
-3) Configuration file dbhelper.ini. A template is included in the source.
+* pypyodbc
+* tabulate
+* Configuration file dbhelper.ini. A template is included in the source.
 
 Sample:
 
->>> from zoidberg import database
->>> import dataformatters as zf
+>>> from pyquebec import database
+>>> from pyquebec import dataformatters as qf
 >>> master = database.connect('master')  # Connection string name from the ini file, or a entire conn string
 >>> master.dbo.sp <TAB KEY>
 db.dbo.spt_fallback_db  db.dbo.spt_fallback_usg db.dbo.spt_values
 db.dbo.spt_fallback_dev db.dbo.spt_monitor
 >>>result = db.dbo.spt_monitor.From().go()
->>> zf.to_html(result)
+>>> qf.to_html(result)
 Creating and opening temp file C:\Users\smonia\AppData\Local\Temp\tmpn3g43ppp.htm
->>> zf.to_csv(result)
+>>> qf.to_csv(result)
 Creating and opening temp file C:\Users\smonia\AppData\Local\Temp\tmpe68shxd9.csv
 >>> result[0]
 row(lastrun=datetime.datetime(2015, 5, 13, 23, 34, 58, 77000), cpu_busy=59, io_busy=29, 
