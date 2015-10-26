@@ -34,3 +34,7 @@ Roadmap (help/guidance appreciated!):
 * The API for querying might need a few tweaks. Suggestions are welcome.
 * Decide on other SQL features to support beyond basic querying. UPDATES, INSERTS, GROUP BY, etc, would it make sense? Would this make supporting other products more difficult?
 * Needs unittest!
+
+Contributors:
+Sebastián Monía - http://github.com/sebasmonia
+Fernando Antivero - http://github.com/ferantivero
