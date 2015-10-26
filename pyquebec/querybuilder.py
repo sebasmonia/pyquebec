@@ -220,3 +220,19 @@ class QueryBuilder():
     def go(self):
         s = self.preview()
         return self.db_instance.exec_query(s)
+
+    def __str__(self):
+        return self.preview()
+
+    def __repr__(self):
+        return self.preview()
+
+    def clone(self):
+        the_clone = QueryBuilder(self.db_instance)
+        the_clone._values['select'] = self._values['select']
+        the_clone._values['from'] = self._values['from']
+        the_clone._values['inner_join'] = self._values['inner_join']
+        the_clone._values['left_join'] = self._values['left_join']
+        the_clone._values['where'] = self._values['where']
+        the_clone._values['order_by'] = self._values['order_by']
+        return the_clone()
