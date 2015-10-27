@@ -13,8 +13,8 @@ _config.read(_config_file_path)
 _connections = {name: conn for name, conn in _config['Connections'].items()}
 
 
-def connect(connection_name):
-    return DataBase(connection_name)
+def connect(connection_name, load_schema=True):
+    return DataBase(connection_name, load_schema)
 
 
 class DataBase:
