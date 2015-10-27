@@ -6,6 +6,8 @@ Dependencies:
 * tabulate
 * Configuration file dbhelper.ini. A template is included in the source.
 
+Full documentation available in https://github.com/sebasmonia/pyquebec/wiki
+
 Sample:
 
 >>> from pyquebec import database
@@ -36,5 +38,5 @@ Roadmap (help/guidance appreciated!):
 * Needs unittest!
 
 Contributors:
-Sebastián Monía - http://github.com/sebasmonia
+SebastiÃ¡n MonÃ­a - http://github.com/sebasmonia
 Fernando Antivero - http://github.com/ferantivero
