@@ -1,10 +1,14 @@
 from setuptools import setup
 
+with open('README.txt') as file:
+    long_description = file.read()
+
 setup(
     name = 'pyquebec',
     packages = ['pyquebec'],
-    version = '0.5.0',
+    version = '0.5.1',
     description = 'A Python package to create simple SQL queries from the console, and quickly display the returned information.',
+    long_description = long_description,
     author='Sebastián Monía',
     author_email='smonia@outlook.com',
     license='MIT',
