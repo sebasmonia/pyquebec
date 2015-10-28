@@ -235,4 +235,4 @@ class QueryBuilder():
         the_clone._values['left_join'] = self._values['left_join']
         the_clone._values['where'] = self._values['where']
         the_clone._values['order_by'] = self._values['order_by']
-        return the_clone()
+        return the_clone
