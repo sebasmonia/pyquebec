@@ -23,7 +23,6 @@ setup(
                    },
     classifiers=[
         'Programming Language :: Python',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: OS Independent',
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
