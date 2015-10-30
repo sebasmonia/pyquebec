@@ -1,2 +1,3 @@
 *.pyc
 zoidberg/database.ini
+*.ini

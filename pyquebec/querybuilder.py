@@ -177,7 +177,6 @@ class QueryBuilder():
             tables.add(col1.table)
             tables.add(col2.table)
         all_cols = []
-        print(type(t) for t in tables)
         for tbl in tables:
             all_cols.extend(tbl.columns().values())
         return all_cols

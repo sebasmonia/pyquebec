@@ -1,3 +1,6 @@
+from collections import OrderedDict
+
+
 class Schema:
     def __init__(self, schema_name):
         self.schema_name = schema_name
@@ -22,11 +25,14 @@ class Table:
         self.schema = schema
         self.table_name = table_name
         self.db_instance = db_instance
+        self._cols = OrderedDict()
         for col in columns:
-            setattr(self, col, Column(self, col))
+            col_obj = Column(self, col)
+            setattr(self, col, col_obj)
+            self._cols[col] = col_obj
 
     def columns(self):
-        return {k: v for k, v in vars(self).items() if type(v) == Column}
+        return self._cols
 
     def __str__(self):
         return self.schema.schema_name + "." + self.table_name
