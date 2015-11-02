@@ -3,6 +3,7 @@
 import tempfile
 import os
 import csv
+import shutil
 import configparser
 from tabulate import tabulate
 
@@ -88,19 +89,26 @@ def to_console(data):
     if not data:
         return
     fields, dict_converter = _deduct_fields_formatter(data[0])
-    fields = [_console_formatter(f) for f in fields]
+    fields = [_console_column_formatter(f) for f in fields]
+    col_count = _console_cols_to_fit()
     # a copy of the data, pre-formatted
     formatted_data = []
     for d in map(dict_converter, data):
-        tup = tuple(map(_console_formatter, d.values()))
+        tup = tuple(map(_console_column_formatter, d.values()))[:col_count]
         formatted_data.append(tup)
     console_text = tabulate(formatted_data, headers=fields)
     print(console_text)
 
 
-def _console_formatter(value):
+def _console_column_formatter(value):
     value = str(value)
     max_length = int(_console_options['Max_Col_Length'])
     if len(value) > max_length:
         value = value[:max_length-3] + "..."
     return value
+
+
+def _console_cols_to_fit():
+    cols, _ = shutil.get_terminal_size()
+    max_length = int(_console_options['Max_Col_Length'])
+    return cols // max_length
