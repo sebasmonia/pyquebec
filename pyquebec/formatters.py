@@ -88,16 +88,19 @@ def to_csv(data):
 def to_console(data):
     if not data:
         return
+
     fields, dict_converter = _deduct_fields_formatter(data[0])
     fields = [_console_column_formatter(f) for f in fields]
-    col_count = _console_cols_to_fit()
     # a copy of the data, pre-formatted
     formatted_data = []
     for d in map(dict_converter, data):
-        tup = tuple(map(_console_column_formatter, d.values()))[:col_count]
-        formatted_data.append(tup)
-    console_text = tabulate(formatted_data, headers=fields)
+        row = tuple(map(_console_column_formatter, d.values()))
+        formatted_data.append(row)
+    col_count = _console_cols_to_fit(fields, formatted_data)
+    console_text = tabulate((x[:col_count] for x in formatted_data),
+                            headers=fields)
     print(console_text)
+    print(col_count)
 
 
 def _console_column_formatter(value):
@@ -108,7 +111,20 @@ def _console_column_formatter(value):
     return value
 
 
-def _console_cols_to_fit():
+def _console_cols_to_fit(fields, data):
     cols, _ = shutil.get_terminal_size()
-    max_length = int(_console_options['Max_Col_Length'])
-    return cols // max_length
+    data_sizes = []
+    d = data[:]
+    d.append(fields)
+    for row in d:
+        data_sizes.append(len(str(col)) for col in row)
+    # print([x for x in (max(size) for size in zip(*data_sizes))])
+    col_sizes = (max(size) for size in zip(*data_sizes))
+    total_chars = 0
+    for ndx, size in enumerate(col_sizes):
+        total_chars += (size + 2)  # each column takes two extra chars
+        # print(ndx, size, total_chars, cols)
+        if total_chars > cols:
+            return ndx - 1
+    else:
+        return len(fields)
