@@ -71,10 +71,12 @@ class Column:
 
     def inner_join(self, field2):
         q = self.table.db_instance.new_query()
+        q.From(self.table)
         q.inner_join((self, field2))
         return q
 
     def left_join(self, field2):
         q = self.table.db_instance.new_query()
+        q.From(self.table)
         q.left_join((self, field2))
         return q
