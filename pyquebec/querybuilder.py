@@ -13,6 +13,10 @@ _query_templates = {name: template for name, template in
 
 class QueryBuilder():
     def __init__(self, db_instance):
+        if db_instance is None:
+            raise ValueError("QueryBuilder must be initialized with "
+                             "a valid DataBase instance")
+
         self.db_instance = db_instance
         self._values = {}
         self._values['select'] = '*'
