@@ -4,7 +4,7 @@ Dependencies:
 
 * pypyodbc
 * tabulate
-* Configuration file dbhelper.ini. A template is included in the source.
+* Configuration file database.ini. A template is included in the source.
 
 Full documentation available in https://github.com/sebasmonia/pyquebec/wiki
 
@@ -38,5 +38,5 @@ Roadmap (help/guidance appreciated!):
 * Needs unittest!
 
 Contributors:
-Sebasti·n MonÌa - http://github.com/sebasmonia
+Sebasti√°n Mon√≠a - http://github.com/sebasmonia
 Fernando Antivero - http://github.com/ferantivero
