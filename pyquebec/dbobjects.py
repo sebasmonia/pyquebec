@@ -21,6 +21,8 @@ class Schema:
 
 
 class Table:
+    _str_template = "Table {0} in Database {1}"
+
     def __init__(self, db_instance, schema, table_name, columns):
         self.schema = schema
         self.table_name = table_name
@@ -34,11 +36,15 @@ class Table:
     def columns(self):
         return self._cols
 
-    def __str__(self):
+    def _query_repr(self):
         return self.schema.schema_name + "." + self.table_name
 
+    def __str__(self):
+        return Table._repr_template.format(self._query_repr(),
+                                           self.db_instance.db_name)
+
     def __repr__(self):
-        return self.schema.schema_name + "." + self.table_name
+        return self.__str__()
 
     def From(self):
         q = self.db_instance.new_query().From(self)
@@ -54,15 +60,21 @@ class Table:
 
 
 class Column:
+    _str_template = "Column {0} from {1}"
+
     def __init__(self, table, column_name):
         self.table = table
         self.column_name = column_name
 
+    def _query_repr(self):
+        return self.table._query_repr + "." + self.column_name
+
     def __str__(self):
-        return str(self.table) + "." + self.column_name
+        return Column._repr_template.format(self.column_name,
+                                            str(self.table))
 
     def __repr__(self):
-        return str(self.table) + "." + self.column_name
+        return self.__str__()
 
     def From(self):
         q = self.table.db_instance.new_query()

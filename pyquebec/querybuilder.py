@@ -40,21 +40,25 @@ class QueryBuilder():
         select = _query_templates['select']
         select = select.format(self._values['select'])
         From = _query_templates['from']
-        From = From.format(self._values['from'])
+        From = From.format(self._values['from']._query_repr())
         joins = []
         ij = _query_templates['inner_join']
         lj = _query_templates['left_join']
         for col1, col2 in self._values['inner_join']:
-            joins.append(ij.format(col2.table, col1, col2))
+            joins.append(ij.format(col2.table._query_repr(),
+                                   col1._query_repr(),
+                                   col2._query_repr()))
         for col1, col2 in self._values['left_join']:
-            joins.append(lj.format(col2.table, col1, col2))
+            joins.append(lj.format(col2.table._query_repr(),
+                                   col1._query_repr(),
+                                   col2._query_repr()))
         joins = '\n'.join(joins)
         if self._values['where']:
             where = _query_templates['where'].format(self._values['where'])
         else:
             where = ''
         if self._values['order_by']:
-            s = ", ".join(str(col) + " " + sort for col, sort in
+            s = ", ".join(col._query_repr() + " " + sort for col, sort in
                           self._values['order_by'])
             order_by = _query_templates['order_by'].format(s)
         else:
@@ -171,7 +175,7 @@ class QueryBuilder():
         else:
             print("select: Invalid argument(s)")
             return
-        self._values['select'] = ', '.join(str(f) for f in fields)
+        self._values['select'] = ', '.join(f._query_repr() for f in fields)
         return self
 
     def _all_columns_available(self):
@@ -188,7 +192,7 @@ class QueryBuilder():
     def _field_picker(self):
         all_cols = self._all_columns_available()
         for ndx, col in enumerate(all_cols, start=1):
-            print(ndx, '-', str(col))
+            print(ndx, '-', col._query_repr())
         sel = input("Provide a comma-separated list of colums (ex: 1,2,5,8):")
         sel = list(map(int, sel.split(',')))
         return [col for ndx, col in enumerate(all_cols, start=1) if ndx in sel]
@@ -198,7 +202,7 @@ class QueryBuilder():
         print('For each field, indicate sort order: [A]sc or [D]esc.',
               'Defaults to Asc.')
         for col in fields:
-            order = input('Field ' + str(col) + ': ASC or DESC? ')
+            order = input('Field ' + col._query_repr() + ': ASC or DESC? ')
             if order in ('D', 'd'):
                 result.append((col, 'DESC'))
             else:
@@ -209,14 +213,14 @@ class QueryBuilder():
         all_cols = {ndx: col for ndx, col in
                     enumerate(self._all_columns_available(), start=1)}
         for ndx, col in all_cols.items():
-            print(ndx, '-', str(col))
+            print(ndx, '-', col._query_repr())
         msg = ("Provide the where clause. You can use {#} to refer to columns"
                " and {var_name} to refer to any variable in your "
-               "environment (using format notation for list/dict elements\n")
+               "environment (using format notation for list/dict elements)\n")
         raw_where = input(msg)
         for ndx, col in all_cols.items():
             find_param = "{" + str(ndx) + "}"
-            raw_where = raw_where.replace(find_param, str(col))
+            raw_where = raw_where.replace(find_param, col._query_repr())
         main = sys.modules['__main__']
         return raw_where.format_map(vars(main))
 

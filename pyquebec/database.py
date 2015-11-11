@@ -19,6 +19,7 @@ def connect(connection_name, load_schema=True):
 
 class DataBase:
     def __init__(self, connection_name, load_schema=True):
+        self.db_name = connection_name
         if connection_name in _connections:
             self.connection_string = _connections[connection_name]
         else:
