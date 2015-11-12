@@ -40,8 +40,8 @@ class Table:
         return self.schema.schema_name + "." + self.table_name
 
     def __str__(self):
-        return Table._repr_template.format(self._query_repr(),
-                                           self.db_instance.db_name)
+        return Table._str_template.format(self._query_repr(),
+                                          self.db_instance.db_name)
 
     def __repr__(self):
         return self.__str__()
@@ -67,11 +67,11 @@ class Column:
         self.column_name = column_name
 
     def _query_repr(self):
-        return self.table._query_repr + "." + self.column_name
+        return self.table._query_repr() + "." + self.column_name
 
     def __str__(self):
-        return Column._repr_template.format(self.column_name,
-                                            str(self.table))
+        return Column._str_template.format(self.column_name,
+                                           str(self.table))
 
     def __repr__(self):
         return self.__str__()
