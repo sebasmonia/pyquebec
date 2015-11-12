@@ -1,4 +1,3 @@
-from .dbobjects import Table, Column
 import configparser
 import sys
 
@@ -12,6 +11,7 @@ _query_templates = {name: template for name, template in
 
 
 class QueryBuilder():
+
     def __init__(self, db_instance):
         if db_instance is None:
             raise ValueError("QueryBuilder must be initialized with "
@@ -79,15 +79,15 @@ class QueryBuilder():
     def _resolve_table_arguments(self, arguments):
         if len(arguments) == 1:
             arg = arguments[0]
+            if QueryBuilder._is_db_obj(arg):
+                return [arg]  # comes from dbobject
             if type(arg) == str:
                 return [self._find_table(arg)]
-            if type(arg) == Table:
-                return [arg]
             if type(arguments) == list:
                 return arguments
-        elif all(type(a) == Table for a in arguments):  # list of tables
-            if type(arguments[0]) == Table:
-                return list(arguments)
+        elif all(QueryBuilder._is_db_obj(a) for a in arguments):
+            # list of dbobj
+            return list(arguments)
         else:
             return None
 
@@ -105,8 +105,9 @@ class QueryBuilder():
         return self._create_join('left_join', *args)
 
     def _create_join(self, join_type, *args):
-        if (len(args) == 2 and type(args[0]) == Column and
-           type(args[1]) == Column):  # two Column objects
+        is_db = QueryBuilder._is_db_obj
+        if (len(args) == 2 and is_db(args[0]) and
+           is_db(args[1])):  # two Column objects
             self._values[join_type].append(args)
         elif all((type(a) == tuple for a in args)):
             # assumes are all (col, col) tuples
@@ -151,7 +152,7 @@ class QueryBuilder():
             self._values['order_by'] = self._sort_order_by(fields)
         elif len(args) == 1 and type(args[0]) == str:
             self._values["order_by"].append((args[0], ''))
-        elif (len(args) == 2 and type(args[0]) == Column and
+        elif (len(args) == 2 and QueryBuilder._is_db_obj(args[0]) and
               type(args[1]) == str):
             # assume Col object, "ASC" or "DESC"
             self._values["order_by"].append(args)
@@ -167,10 +168,11 @@ class QueryBuilder():
         fields = []
         if not args:
             fields = self._field_picker()
-        elif (len(args) == 1 and type(args[0]) == list  # assume list of fields
-              and all(type(a) == Column for a in args[0])):
+        elif (len(args) == 1 and type(args[0]) == list  # assume list of Cols
+              and all(QueryBuilder._is_db_obj(a) for a in args[0])):
             fields = args[0]
-        elif all(type(a) == Column for a in args):  # each argument is a field
+        elif all(QueryBuilder._is_db_obj(a) for a in args):
+            # each argument is a field
             fields = args
         else:
             print("select: Invalid argument(s)")
@@ -243,3 +245,7 @@ class QueryBuilder():
         the_clone._values['where'] = self._values['where']
         the_clone._values['order_by'] = self._values['order_by']
         return the_clone
+
+    @staticmethod
+    def _is_db_obj(obj):
+        return hasattr(obj, "_query_repr")
