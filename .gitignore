@@ -1,4 +1,5 @@
 *.pyc
 zoidberg/database.ini
 *.ini
+pyquebec/.vscode
 .vscode/tasks.json

@@ -1,4 +1,3 @@
-from .dbobjects import Table, Column
 import configparser
 import sys
 
@@ -12,6 +11,7 @@ _query_templates = {name: template for name, template in
 
 
 class QueryBuilder():
+
     def __init__(self, db_instance):
         if db_instance is None:
             raise ValueError("QueryBuilder must be initialized with "
@@ -40,21 +40,25 @@ class QueryBuilder():
         select = _query_templates['select']
         select = select.format(self._values['select'])
         From = _query_templates['from']
-        From = From.format(self._values['from'])
+        From = From.format(self._values['from']._query_repr())
         joins = []
         ij = _query_templates['inner_join']
         lj = _query_templates['left_join']
         for col1, col2 in self._values['inner_join']:
-            joins.append(ij.format(col2.table, col1, col2))
+            joins.append(ij.format(col2.table._query_repr(),
+                                   col1._query_repr(),
+                                   col2._query_repr()))
         for col1, col2 in self._values['left_join']:
-            joins.append(lj.format(col2.table, col1, col2))
+            joins.append(lj.format(col2.table._query_repr(),
+                                   col1._query_repr(),
+                                   col2._query_repr()))
         joins = '\n'.join(joins)
         if self._values['where']:
             where = _query_templates['where'].format(self._values['where'])
         else:
             where = ''
         if self._values['order_by']:
-            s = ", ".join(str(col) + " " + sort for col, sort in
+            s = ", ".join(col._query_repr() + " " + sort for col, sort in
                           self._values['order_by'])
             order_by = _query_templates['order_by'].format(s)
         else:
@@ -75,15 +79,15 @@ class QueryBuilder():
     def _resolve_table_arguments(self, arguments):
         if len(arguments) == 1:
             arg = arguments[0]
+            if QueryBuilder._is_db_obj(arg):
+                return [arg]  # comes from dbobject
             if type(arg) == str:
                 return [self._find_table(arg)]
-            if type(arg) == Table:
-                return [arg]
             if type(arguments) == list:
                 return arguments
-        elif all(type(a) == Table for a in arguments):  # list of tables
-            if type(arguments[0]) == Table:
-                return list(arguments)
+        elif all(QueryBuilder._is_db_obj(a) for a in arguments):
+            # list of dbobj
+            return list(arguments)
         else:
             return None
 
@@ -101,8 +105,9 @@ class QueryBuilder():
         return self._create_join('left_join', *args)
 
     def _create_join(self, join_type, *args):
-        if (len(args) == 2 and type(args[0]) == Column and
-           type(args[1]) == Column):  # two Column objects
+        is_db = QueryBuilder._is_db_obj
+        if (len(args) == 2 and is_db(args[0]) and
+           is_db(args[1])):  # two Column objects
             self._values[join_type].append(args)
         elif all((type(a) == tuple for a in args)):
             # assumes are all (col, col) tuples
@@ -147,7 +152,7 @@ class QueryBuilder():
             self._values['order_by'] = self._sort_order_by(fields)
         elif len(args) == 1 and type(args[0]) == str:
             self._values["order_by"].append((args[0], ''))
-        elif (len(args) == 2 and type(args[0]) == Column and
+        elif (len(args) == 2 and QueryBuilder._is_db_obj(args[0]) and
               type(args[1]) == str):
             # assume Col object, "ASC" or "DESC"
             self._values["order_by"].append(args)
@@ -163,15 +168,16 @@ class QueryBuilder():
         fields = []
         if not args:
             fields = self._field_picker()
-        elif (len(args) == 1 and type(args[0]) == list  # assume list of fields
-              and all(type(a) == Column for a in args[0])):
+        elif (len(args) == 1 and type(args[0]) == list  # assume list of Cols
+              and all(QueryBuilder._is_db_obj(a) for a in args[0])):
             fields = args[0]
-        elif all(type(a) == Column for a in args):  # each argument is a field
+        elif all(QueryBuilder._is_db_obj(a) for a in args):
+            # each argument is a field
             fields = args
         else:
             print("select: Invalid argument(s)")
             return
-        self._values['select'] = ', '.join(str(f) for f in fields)
+        self._values['select'] = ', '.join(f._query_repr() for f in fields)
         return self
 
     def _all_columns_available(self):
@@ -188,7 +194,7 @@ class QueryBuilder():
     def _field_picker(self):
         all_cols = self._all_columns_available()
         for ndx, col in enumerate(all_cols, start=1):
-            print(ndx, '-', str(col))
+            print(ndx, '-', col._query_repr())
         sel = input("Provide a comma-separated list of colums (ex: 1,2,5,8):")
         sel = list(map(int, sel.split(',')))
         return [col for ndx, col in enumerate(all_cols, start=1) if ndx in sel]
@@ -198,7 +204,7 @@ class QueryBuilder():
         print('For each field, indicate sort order: [A]sc or [D]esc.',
               'Defaults to Asc.')
         for col in fields:
-            order = input('Field ' + str(col) + ': ASC or DESC? ')
+            order = input('Field ' + col._query_repr() + ': ASC or DESC? ')
             if order in ('D', 'd'):
                 result.append((col, 'DESC'))
             else:
@@ -209,14 +215,14 @@ class QueryBuilder():
         all_cols = {ndx: col for ndx, col in
                     enumerate(self._all_columns_available(), start=1)}
         for ndx, col in all_cols.items():
-            print(ndx, '-', str(col))
+            print(ndx, '-', col._query_repr())
         msg = ("Provide the where clause. You can use {#} to refer to columns"
                " and {var_name} to refer to any variable in your "
-               "environment (using format notation for list/dict elements\n")
+               "environment (using format notation for list/dict elements)\n")
         raw_where = input(msg)
         for ndx, col in all_cols.items():
             find_param = "{" + str(ndx) + "}"
-            raw_where = raw_where.replace(find_param, str(col))
+            raw_where = raw_where.replace(find_param, col._query_repr())
         main = sys.modules['__main__']
         return raw_where.format_map(vars(main))
 
@@ -239,3 +245,7 @@ class QueryBuilder():
         the_clone._values['where'] = self._values['where']
         the_clone._values['order_by'] = self._values['order_by']
         return the_clone
+
+    @staticmethod
+    def _is_db_obj(obj):
+        return hasattr(obj, "_query_repr")
