@@ -3,14 +3,14 @@ from collections import namedtuple
 from .dbobjects import Schema, Table
 from .querybuilder import QueryBuilder
 from .config import get_connections, get_REPL, create_config_db
-from .schema_loader import cache_schema
+# from .schema_reader import cache_schema
 
 _connections = {name: conn for name, conn in get_connections()}
 
 
 def add_database(name, connection_string, engine):
     create_config_db(name, connection_string, engine)
-    cache schema(name, connection_string, engine)
+    #cache_schema(name)
 
 def connect(connection_name, load_schema=True):
     return DataBase(connection_name, load_schema)
