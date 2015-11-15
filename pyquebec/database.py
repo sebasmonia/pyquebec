@@ -2,18 +2,22 @@
 from collections import namedtuple
 from .dbobjects import Schema, Table
 from .querybuilder import QueryBuilder
-import configparser
-import sys
+from .config import get_connections, get_REPL, create_config_db
 
-_config_file_path = __file__.replace(".py", ".ini")
-_config = configparser.ConfigParser()
-_config.optionxform = str
-_config.read(_config_file_path)
+_connections = {name: conn for name, conn in get_connections()}
 
-_connections = {name: conn for name, conn in _config['Connections'].items()}
 
+def add_database(name, connection_string, engine):
+    # create_config
+    # cache schema
+    pass
 
 def connect(connection_name, load_schema=True):
+    return DataBase(connection_name, load_schema)
+
+
+def new_connect(connection_name):
+    
     return DataBase(connection_name, load_schema)
 
 
@@ -29,7 +33,7 @@ class DataBase:
             self._load_schema()
 
     def _load_schema(self):
-        queries = _config['REPL_Queries']
+        queries = get_REPL()
         schemas = self._run_string_query(queries['Schemas'])
         tables = self._run_string_query(queries['Tables'])
         all_columns = self._run_string_query(queries['Columns'])
@@ -64,7 +68,8 @@ class DataBase:
                 columns = (column[0] for column in
                            odbc_rows[0].cursor_description)
                 unique = self._make_cols_unique(columns)
-                builder = _create_next_row_builder(unique)
+                builder = namedtuple('row', unique)
+                # builder = _create_next_row_builder(unique)
                 rows_list = [builder._make(row) for row in odbc_rows]
         except Exception as error:
             print(error)
@@ -108,15 +113,3 @@ class DataBase:
                 counter += 1
             seen.append(c)
         return seen
-
-
-def _create_next_row_builder(columns):
-    module_self = sys.modules[__name__]
-    var_name = "_row_builder"
-    for num in range(1000):
-        var_name = "_row_builder" + str(num)
-        if not hasattr(module_self, var_name):
-            break
-    builder = namedtuple('row', columns)
-    setattr(module_self, var_name, builder)
-    return builder
