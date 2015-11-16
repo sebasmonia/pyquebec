@@ -1,59 +1,47 @@
 ﻿import pypyodbc
 from collections import namedtuple
-from .dbobjects import Schema, Table
 from .querybuilder import QueryBuilder
-from .config import get_connections, get_REPL, create_config_db
-# from .schema_reader import cache_schema
-
-_connections = {name: conn for name, conn in get_connections()}
+from .config import create_config_db, get_connection_string, get_uses_schema
+from .schema_reader import cache_schema, read_schema_from_cache
 
 
 def add_database(name, connection_string, engine):
     create_config_db(name, connection_string, engine)
-    #cache_schema(name)
+    db_instance = DataBase(name, None)
+    cache_schema(name, db_instance)
+    return connect(name)
 
-def connect(connection_name, load_schema=True):
-    return DataBase(connection_name, load_schema)
 
-
-def new_connect(connection_name):
-    return DataBase(connection_name, load_schema)
+def connect(name, load_schema=True):
+    if load_schema:
+        cached_schema = read_schema_from_cache(name)
+        return DataBase(name, cached_schema)
+    else:
+        return DataBase(name)
 
 
 class DataBase:
-    def __init__(self, connection_name, load_schema=True):
-        self.db_name = connection_name
-        if connection_name in _connections:
-            self.connection_string = _connections[connection_name]
-        else:
-            self.connection_string = connection_name
+    def __init__(self, name, cached_schema=None):
+        self.db_name = name
+        self.connection_string = get_connection_string(name)
         self.statement_history = []
-        if load_schema:
-            self._load_schema()
+        self.has_schema_info = bool(cached_schema)
+        if self.has_schema_info:
+            self._load_schema(cached_schema)
 
-    def _load_schema(self):
-        queries = get_REPL()
-        schemas = self._run_string_query(queries['Schemas'])
-        tables = self._run_string_query(queries['Tables'])
-        all_columns = self._run_string_query(queries['Columns'])
-        for s in schemas:
-            schema_ref = Schema(s.name)
-            setattr(self, s.name, schema_ref)
-        for t in tables:
-            schema_ref = getattr(self, t.schema)
-            cols = (col.name for col in all_columns if
-                    col.table == t.name and
-                    col.schema == t.schema)
-            table_ref = Table(self, schema_ref, t.name, cols)
-            setattr(schema_ref, t.name, table_ref)
+    def _load_schema(self, cached_schema):
+        if hasattr(cached_schema[0], "schema_name"):
+            for obj in cached_schema:
+                setattr(self, obj.schema_name, obj)
+                for tbl in obj.tables().values():
+                    tbl.db_instance = self
+        else:
+            for obj in cached_schema:
+                setattr(self, obj.table_name, obj)
+                obj.db_instance = self
 
-    def schemas(self):
-        return {k: v for k, v in vars(self).items() if type(v) == Schema}
-
-    def _run_string_query(self, statement, raw_result=False):
-        # default values
+    def exec_query(self, statement, raw_result=False):
         conn = None
-        builder = None
         rows_list = []
         try:
             conn = pypyodbc.connect(self.connection_string)
@@ -68,37 +56,17 @@ class DataBase:
                            odbc_rows[0].cursor_description)
                 unique = self._make_cols_unique(columns)
                 builder = namedtuple('row', unique)
-                # builder = _create_next_row_builder(unique)
                 rows_list = [builder._make(row) for row in odbc_rows]
         except Exception as error:
             print(error)
-            print(self.connection_string)
         finally:
             if conn is not None:
                 conn.close()
             self.statement_history.append(statement)
             return rows_list
 
-    def _run_string_non_query(self, statement):
-        # default values
-        conn = None
-        try:
-            conn = pypyodbc.connect(self.connection_string, autocommit=True)
-            cursor = conn.cursor()
-            value = cursor.execute(statement).rowcount
-            self.statement_history.append(statement)
-            return value
-        except Exception as error:
-            print(error)
-        finally:
-            if conn is not None:
-                conn.close()
-
-    def exec_query(self, statement, raw_result=False):
-        return self._run_string_query(statement, raw_result)
-
     def new_query(self):
-        if self.schemas():
+        if self.has_schema_info:
             return QueryBuilder(self)
         else:
             print("Schema information not available")
@@ -112,3 +80,24 @@ class DataBase:
                 counter += 1
             seen.append(c)
         return seen
+
+    def table_finder(self, name, partial_name=True):
+        if not self.has_schema_info:
+            print("Schema information not available")
+            return []
+        tables = []
+        if get_uses_schema(self.db_name):
+            for s in (v for v in vars(self).values() if
+                      hasattr(v, "schema_name")):
+                tables.extend(s.tables().values())
+        else:
+            tables = [t for t in vars(self).values() if
+                      hasattr(t, "table_name")]
+
+        table_name = name.lower()
+        if partial_name:
+            return [tbl for tbl in tables
+                    if table_name in tbl.table_name.lower()]
+        else:
+            return [tbl for tbl in tables
+                    if table_name == tbl.table_name.lower()]

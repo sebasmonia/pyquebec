@@ -4,14 +4,11 @@ import tempfile
 import os
 import csv
 import shutil
-import configparser
+from .config import get_config_section
 from tabulate import tabulate
 
-_config_file_path = __file__.replace(".py", ".ini")
-_config = configparser.ConfigParser()
-_config.read(_config_file_path)
-_html_options = _config["HTMLOptions"]
-_console_options = _config["ConsoleOptions"]
+_html_options = get_config_section("HTMLOptions")
+_console_options = get_config_section("ConsoleOptions")
 
 
 def to_html(data):

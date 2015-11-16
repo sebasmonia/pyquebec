@@ -8,17 +8,6 @@ class Schema:
     def tables(self):
         return {k: v for k, v in vars(self).items() if type(v) == Table}
 
-    def table_finder(self, table_name, partial_name=True):
-        table_name = table_name.lower()
-        tables = self.tables().items()
-        if partial_name:
-            return [tbl for name, tbl in tables if table_name in name.lower()]
-        else:
-            matches = [tbl for name, tbl in tables
-                       if table_name == name.lower()]
-            if matches:
-                return matches[0]  # Should be impossible to have more than one
-
 
 class Table:
     _str_template = "Table {0} in Database {1}"
@@ -37,7 +26,10 @@ class Table:
         return self._cols
 
     def _query_repr(self):
-        return self.schema.schema_name + "." + self.table_name
+        if self.schema:
+            return self.schema.schema_name + "." + self.table_name
+        else:
+            return self.table_name
 
     def __str__(self):
         return Table._str_template.format(self._query_repr(),
