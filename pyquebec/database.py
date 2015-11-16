@@ -4,6 +4,12 @@ from .querybuilder import QueryBuilder
 from .config import get_db_config
 
 
+def refresh_cache(name):
+    db_instance = DataBase(name, None)
+    cache_schema(name, db_instance)
+    return connect(name)
+
+
 class DataBase:
     def __init__(self, name, cached_schema=None):
         self.db_name = name
