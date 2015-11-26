@@ -1,3 +1,4 @@
+from collections import namedtuple
 import configparser
 import os.path
 import shutil
@@ -8,42 +9,32 @@ _config = configparser.ConfigParser()
 _config.optionxform = str
 _config.read(_config_file)
 
+dbconfig = namedtuple("dbconfig", ['connection', 'engine', 'uses_schema',
+                                   'schema_queries', 'query_templates'])
 
 def get_config_section(section_name):
     return _config[section_name]
 
-
-def _open_db_config(name):
-    ini_file = os.path.join(_config_folder, name + ".ini")
-    cfg = configparser.ConfigParser()
-    cfg.optionxform = str
-    cfg.read(ini_file)
+def get_db_config(name):
+    ini_path = os.path.join(_config_folder, name + ".ini")
+    ini = configparser.ConfigParser()
+    ini.optionxform = str
+    ini.read(ini_path)
+    conn = ini["Connection"]["Connection_String"]
+    engine = ini["Configuration"]["Engine_Name"]
+    uses_schema = (ini["Configuration"]["Uses_Schema"] == 'True')
+    schema_queries = ini["SchemaQueries"]
+    query_templates = ini["QueryTemplates"]
+    cfg = dbconfig(conn, engine, uses_schema, schema_queries, query_templates)
     return cfg
-
-
-def get_connection_string(name):
-    return _open_db_config(name)["Connection"]["Connection_String"]
-
-
-def get_db_engine(name):
-    return _open_db_config(name)["Configuration"]["Engine_Name"]
-
-
-def get_uses_schema(name):
-    value = _open_db_config(name)["Configuration"]["Uses_Schema"]
-    return (value == 'True')
-
-def get_schema_queries(name):
-    return _open_db_config(name)["SchemaQueries"]
-
-
-def get_query_templates(name):
-    return _open_db_config(name)["QueryTemplates"]
 
 
 def create_config_db(name, connection_string, engine):
     new_cfg_path = _copy_template(name, engine)
-    new_cfg = _open_db_config(name)
+    ini_file = os.path.join(_config_folder, name + ".ini")
+    new_cfg = configparser.ConfigParser()
+    new_cfg.optionxform = str
+    new_cfg.read(ini_file)
     new_cfg.add_section("Connection")
     new_cfg["Connection"]["Connection_String"] = connection_string
     with open(new_cfg_path, "w+") as f:

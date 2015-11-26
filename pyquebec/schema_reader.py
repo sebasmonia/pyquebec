@@ -2,19 +2,18 @@ import os.path
 import json
 from .dbobjects import Schema, Table
 from collections import namedtuple
-from .config import get_db_engine, get_schema_queries
 
 _cache_folder = os.path.join(os.path.expanduser("~"), ".pyquebec")
 _cachecolumn = namedtuple('cachecolumn', ['schema', 'table', 'name'])
 
 
 def cache_schema(name, db_instance):
-    engine = get_db_engine(name)
-    schema_objects = _loaders[engine](db_instance)
+    engine_name = db_instance.config.engine
+    schema_objects = _loaders[engine_name](db_instance)
     _serialize_schema(name, schema_objects)
 
 def _load_MSSQL(db):
-    queries = get_schema_queries(db.db_name)
+    queries = db.config.schema_queries
     schemas = db.exec_query(queries['Schemas'])
     tables = db.exec_query(queries['Tables'])
     all_columns = db.exec_query(queries['Columns'])
@@ -27,7 +26,7 @@ def _load_MSSQL(db):
 def _load_SQLite(db):
     objects = {}
     objects['Schemas'] = None
-    queries = get_schema_queries(db.db_name)
+    queries = db.config.schema_queries
     tables = db.exec_query(queries['Tables'])
     objects["Tables"] = [(None, t.name) for t in tables]
     objects["Columns"] = []

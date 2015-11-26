@@ -1,4 +1,3 @@
-from .config import get_query_templates
 import sys
 
 
@@ -8,7 +7,7 @@ class QueryBuilder():
         if db_instance is None:
             raise ValueError("QueryBuilder must be initialized with "
                              "a valid DataBase instance")
-        templates = get_query_templates(db_instance.db_name)
+        templates = db_instance.config.query_templates
         self._query_templates = {name: temp for name, temp in
                                  templates.items()}
         self.db_instance = db_instance

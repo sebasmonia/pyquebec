@@ -1,13 +1,13 @@
 ﻿import pypyodbc
 from collections import namedtuple
 from .querybuilder import QueryBuilder
-from .config import get_connection_string, get_uses_schema
+from .config import get_db_config
 
 
 class DataBase:
     def __init__(self, name, cached_schema=None):
         self.db_name = name
-        self.connection_string = get_connection_string(name)
+        self.config = get_db_config(name)
         self.statement_history = []
         self.has_schema_info = bool(cached_schema)
         if self.has_schema_info:
@@ -28,7 +28,7 @@ class DataBase:
         conn = None
         rows_list = []
         try:
-            conn = pypyodbc.connect(self.connection_string)
+            conn = pypyodbc.connect(self.config.connection)
             cursor = conn.cursor()
             cursor.execdirect(statement)
             odbc_rows = cursor.fetchall()
@@ -70,7 +70,7 @@ class DataBase:
             print("Schema information not available")
             return []
         tables = []
-        if get_uses_schema(self.db_name):
+        if self.config.uses_schema:
             for s in (v for v in vars(self).values() if
                       hasattr(v, "schema_name")):
                 tables.extend(s.tables().values())
