@@ -85,3 +85,9 @@ class DataBase:
         else:
             return [tbl for tbl in tables
                     if table_name == tbl.table_name.lower()]
+
+    def __str__(self):
+        return "DataBase " + self.db_name
+
+    def __repr__(self):
+        return self.__str__()
