@@ -12,6 +12,7 @@ def cache_schema(name, db_instance):
     schema_objects = _loaders[engine_name](db_instance)
     _serialize_schema(name, schema_objects)
 
+
 def _load_MSSQL(db):
     queries = db.config.schema_queries
     schemas = db.exec_query(queries['Schemas'])
@@ -22,6 +23,7 @@ def _load_MSSQL(db):
     objects['Tables'] = [(t.schema, t.name) for t in tables]
     objects['Columns'] = [(c.schema, c.table, c.name) for c in all_columns]
     return objects
+
 
 def _load_SQLite(db):
     objects = {}
@@ -80,6 +82,6 @@ def _load_without_schema(cache):
 
 
 _loaders = {
-    "MSSQL": _load_MSSQL, 
-    "SQLite" : _load_SQLite
+    "MSSQL": _load_MSSQL,
+    "SQLite": _load_SQLite
 }

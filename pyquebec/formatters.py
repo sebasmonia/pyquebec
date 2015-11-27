@@ -1,5 +1,4 @@
-"""Assortment of helpers to print\manipulate data
-"""
+"""Assortment of helpers to print/manipulate data."""
 import tempfile
 import os
 import csv
@@ -46,10 +45,6 @@ def to_html(data):
 
 
 def _deduct_fields_formatter(sample):
-    """
-    Extracts the header/fields from the collection, and the function used to
-    retrieve the information from each element
-    """
     # this function is called after validation of at least one row present
     fields = None
     func = None

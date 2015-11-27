@@ -23,5 +23,5 @@ def refresh_cache(name):
     return open(name)
 
 
-def list_names():
+def list_databases():
     pass
