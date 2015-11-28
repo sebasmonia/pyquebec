@@ -223,7 +223,7 @@ class QueryBuilder():
 
     def go(self):
         s = self.preview()
-        return self.db_instance.exec_query(s)
+        return self.db_instance.exec_sql(s)
 
     def __str__(self):
         return self.preview()

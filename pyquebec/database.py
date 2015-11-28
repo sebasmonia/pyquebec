@@ -24,14 +24,19 @@ class DataBase:
                 setattr(self, obj.table_name, obj)
                 obj.db_instance = self
 
-    def exec_query(self, statement, raw_result=False):
+    def exec_sql(self, statement, raw_result=False, row_count=False):
         conn = None
         rows_list = []
+        rcount = 0
         try:
-            conn = pypyodbc.connect(self.config.connection)
+            conn = pypyodbc.connect(self.config.connection, autocommit=True)
             cursor = conn.cursor()
             cursor.execdirect(statement)
-            odbc_rows = cursor.fetchall()
+            try:
+                odbc_rows = cursor.fetchall()
+            except IndexError:
+                odbc_rows = []  # if statement is not a SELECT
+            rcount = cursor.rowcount
             if not odbc_rows or raw_result:
                 # empty list or just tuples
                 rows_list = [tuple(row) for row in odbc_rows]
@@ -42,12 +47,15 @@ class DataBase:
                 builder = namedtuple('row', unique)
                 rows_list = [builder._make(row) for row in odbc_rows]
         except Exception as error:
-            print(error)
+            print("ERROR: ", str(error))
         finally:
             if conn is not None:
                 conn.close()
             self.statement_history.append(statement)
-            return rows_list
+            if row_count:
+                return rows_list, rcount
+            else:
+                return rows_list
 
     def new_query(self):
         if self.has_schema_info:

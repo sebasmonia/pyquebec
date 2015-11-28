@@ -15,9 +15,9 @@ def cache_schema(name, db_instance):
 
 def _load_MSSQL(db):
     queries = db.config.schema_queries
-    schemas = db.exec_query(queries['Schemas'])
-    tables = db.exec_query(queries['Tables'])
-    all_columns = db.exec_query(queries['Columns'])
+    schemas = db.exec_sql(queries['Schemas'])
+    tables = db.exec_sql(queries['Tables'])
+    all_columns = db.exec_sql(queries['Columns'])
     objects = {}
     objects['Schemas'] = [s.name for s in schemas]
     objects['Tables'] = [(t.schema, t.name) for t in tables]
@@ -29,11 +29,11 @@ def _load_SQLite(db):
     objects = {}
     objects['Schemas'] = None
     queries = db.config.schema_queries
-    tables = db.exec_query(queries['Tables'])
+    tables = db.exec_sql(queries['Tables'])
     objects["Tables"] = [(None, t.name) for t in tables]
     objects["Columns"] = []
     for t in tables:
-        cols = db.exec_query("PRAGMA table_info(" + t.name + ")")
+        cols = db.exec_sql("PRAGMA table_info(" + t.name + ")")
         c = [(None, t.name, c.name) for c in cols]
         objects["Columns"].extend(c)
 
