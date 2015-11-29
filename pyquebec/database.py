@@ -1,62 +1,42 @@
 ﻿import pypyodbc
 from collections import namedtuple
-from .dbobjects import Schema, Table
 from .querybuilder import QueryBuilder
-import configparser
-import sys
-
-_config_file_path = __file__.replace(".py", ".ini")
-_config = configparser.ConfigParser()
-_config.optionxform = str
-_config.read(_config_file_path)
-
-_connections = {name: conn for name, conn in _config['Connections'].items()}
-
-
-def connect(connection_name, load_schema=True):
-    return DataBase(connection_name, load_schema)
+from .config import get_db_config
 
 
 class DataBase:
-    def __init__(self, connection_name, load_schema=True):
-        self.db_name = connection_name
-        if connection_name in _connections:
-            self.connection_string = _connections[connection_name]
-        else:
-            self.connection_string = connection_name
+    def __init__(self, name, cached_schema=None):
+        self.db_name = name
+        self.config = get_db_config(name)
         self.statement_history = []
-        if load_schema:
-            self._load_schema()
+        self.has_schema_info = bool(cached_schema)
+        if self.has_schema_info:
+            self._load_schema(cached_schema)
 
-    def _load_schema(self):
-        queries = _config['REPL_Queries']
-        schemas = self._run_string_query(queries['Schemas'])
-        tables = self._run_string_query(queries['Tables'])
-        all_columns = self._run_string_query(queries['Columns'])
-        for s in schemas:
-            schema_ref = Schema(s.name)
-            setattr(self, s.name, schema_ref)
-        for t in tables:
-            schema_ref = getattr(self, t.schema)
-            cols = (col.name for col in all_columns if
-                    col.table == t.name and
-                    col.schema == t.schema)
-            table_ref = Table(self, schema_ref, t.name, cols)
-            setattr(schema_ref, t.name, table_ref)
+    def _load_schema(self, cached_schema):
+        if hasattr(cached_schema[0], "schema_name"):
+            for obj in cached_schema:
+                setattr(self, obj.schema_name, obj)
+                for tbl in obj.tables().values():
+                    tbl.db_instance = self
+        else:
+            for obj in cached_schema:
+                setattr(self, obj.table_name, obj)
+                obj.db_instance = self
 
-    def schemas(self):
-        return {k: v for k, v in vars(self).items() if type(v) == Schema}
-
-    def _run_string_query(self, statement, raw_result=False):
-        # default values
+    def exec_sql(self, statement, raw_result=False, row_count=False):
         conn = None
-        builder = None
         rows_list = []
+        rcount = 0
         try:
-            conn = pypyodbc.connect(self.connection_string)
+            conn = pypyodbc.connect(self.config.connection, autocommit=True)
             cursor = conn.cursor()
             cursor.execdirect(statement)
-            odbc_rows = cursor.fetchall()
+            try:
+                odbc_rows = cursor.fetchall()
+            except IndexError:
+                odbc_rows = []  # if statement is not a SELECT
+            rcount = cursor.rowcount
             if not odbc_rows or raw_result:
                 # empty list or just tuples
                 rows_list = [tuple(row) for row in odbc_rows]
@@ -64,37 +44,21 @@ class DataBase:
                 columns = (column[0] for column in
                            odbc_rows[0].cursor_description)
                 unique = self._make_cols_unique(columns)
-                builder = _create_next_row_builder(unique)
+                builder = namedtuple('row', unique)
                 rows_list = [builder._make(row) for row in odbc_rows]
         except Exception as error:
-            print(error)
-            print(self.connection_string)
+            print("ERROR: ", str(error))
         finally:
             if conn is not None:
                 conn.close()
             self.statement_history.append(statement)
-            return rows_list
-
-    def _run_string_non_query(self, statement):
-        # default values
-        conn = None
-        try:
-            conn = pypyodbc.connect(self.connection_string, autocommit=True)
-            cursor = conn.cursor()
-            value = cursor.execute(statement).rowcount
-            self.statement_history.append(statement)
-            return value
-        except Exception as error:
-            print(error)
-        finally:
-            if conn is not None:
-                conn.close()
-
-    def exec_query(self, statement, raw_result=False):
-        return self._run_string_query(statement, raw_result)
+            if row_count:
+                return rows_list, rcount
+            else:
+                return rows_list
 
     def new_query(self):
-        if self.schemas():
+        if self.has_schema_info:
             return QueryBuilder(self)
         else:
             print("Schema information not available")
@@ -109,14 +73,28 @@ class DataBase:
             seen.append(c)
         return seen
 
+    def table_finder(self, name, partial_name=True):
+        if not self.has_schema_info:
+            print("Schema information not available")
+            return []
+        tables = []
+        if self.config.uses_schema:
+            for s in (v for v in vars(self).values() if
+                      hasattr(v, "schema_name")):
+                tables.extend(s.tables().values())
+        else:
+            tables = [t for t in vars(self).values() if
+                      hasattr(t, "table_name")]
+        table_name = name.lower()
+        if partial_name:
+            return [tbl for tbl in tables
+                    if table_name in tbl.table_name.lower()]
+        else:
+            return [tbl for tbl in tables
+                    if table_name == tbl.table_name.lower()]
 
-def _create_next_row_builder(columns):
-    module_self = sys.modules[__name__]
-    var_name = "_row_builder"
-    for num in range(1000):
-        var_name = "_row_builder" + str(num)
-        if not hasattr(module_self, var_name):
-            break
-    builder = namedtuple('row', columns)
-    setattr(module_self, var_name, builder)
-    return builder
+    def __str__(self):
+        return "DataBase " + self.db_name
+
+    def __repr__(self):
+        return self.__str__()

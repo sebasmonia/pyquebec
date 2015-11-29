@@ -1,13 +1,4 @@
-import configparser
 import sys
-
-_config_file_path = __file__.replace(".py", ".ini")
-_config = configparser.ConfigParser()
-_config.optionxform = str
-_config.read(_config_file_path)
-
-_query_templates = {name: template for name, template in
-                    _config['QueryTemplates'].items()}
 
 
 class QueryBuilder():
@@ -16,7 +7,9 @@ class QueryBuilder():
         if db_instance is None:
             raise ValueError("QueryBuilder must be initialized with "
                              "a valid DataBase instance")
-
+        templates = db_instance.config.query_templates
+        self._query_templates = {name: temp for name, temp in
+                                 templates.items()}
         self.db_instance = db_instance
         self._values = {}
         self._values['select'] = '*'
@@ -37,13 +30,13 @@ class QueryBuilder():
             print('Invalid section.')
 
     def preview(self):
-        select = _query_templates['select']
+        select = self._query_templates['select']
         select = select.format(self._values['select'])
-        From = _query_templates['from']
+        From = self._query_templates['from']
         From = From.format(self._values['from']._query_repr())
         joins = []
-        ij = _query_templates['inner_join']
-        lj = _query_templates['left_join']
+        ij = self._query_templates['inner_join']
+        lj = self._query_templates['left_join']
         for col1, col2 in self._values['inner_join']:
             joins.append(ij.format(col2.table._query_repr(),
                                    col1._query_repr(),
@@ -54,13 +47,14 @@ class QueryBuilder():
                                    col2._query_repr()))
         joins = '\n'.join(joins)
         if self._values['where']:
-            where = _query_templates['where'].format(self._values['where'])
+            where = self._query_templates['where']
+            where = where.format(self._values['where'])
         else:
             where = ''
         if self._values['order_by']:
             s = ", ".join(col._query_repr() + " " + sort for col, sort in
                           self._values['order_by'])
-            order_by = _query_templates['order_by'].format(s)
+            order_by = self._query_templates['order_by'].format(s)
         else:
             order_by = ''
 
@@ -93,10 +87,11 @@ class QueryBuilder():
 
     def _find_table(self, str_name):
         str_name = str_name.lower()
-        matches = [s.table_finder(str_name, partial_name=False) for s in
-                   self.db_instance.schemas().values()]
-        if any(matches):
+        matches = self.db_instance.table_finder(str_name, partial_name=False)
+        if matches:
             return [x for x in matches if x][0]
+        else:
+            raise ValueError("Not a valid table name")
 
     def inner_join(self, *args):
         return self._create_join('inner_join', *args)
@@ -111,7 +106,8 @@ class QueryBuilder():
             self._values[join_type].append(args)
         elif all((type(a) == tuple for a in args)):
             # assumes are all (col, col) tuples
-            self._values[join_type].extend(args)
+            for pair in args:
+                self._values[join_type].extend(pair)
         else:  # analyze arguments like From
             new_tables = self._resolve_table_arguments(args)
             if not new_tables:
@@ -228,7 +224,7 @@ class QueryBuilder():
 
     def go(self):
         s = self.preview()
-        return self.db_instance.exec_query(s)
+        return self.db_instance.exec_sql(s)
 
     def __str__(self):
         return self.preview()

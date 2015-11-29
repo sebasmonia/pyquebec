@@ -1,17 +1,13 @@
-"""Assortment of helpers to print\manipulate data
-"""
+"""Assortment of helpers to print/manipulate data."""
 import tempfile
 import os
 import csv
 import shutil
-import configparser
+from .config import get_config_section
 from tabulate import tabulate
 
-_config_file_path = __file__.replace(".py", ".ini")
-_config = configparser.ConfigParser()
-_config.read(_config_file_path)
-_html_options = _config["HTMLOptions"]
-_console_options = _config["ConsoleOptions"]
+_html_options = get_config_section("HTMLOptions")
+_console_options = get_config_section("ConsoleOptions")
 
 
 def to_html(data):
@@ -49,10 +45,6 @@ def to_html(data):
 
 
 def _deduct_fields_formatter(sample):
-    """
-    Extracts the header/fields from the collection, and the function used to
-    retrieve the information from each element
-    """
     # this function is called after validation of at least one row present
     fields = None
     func = None
