@@ -85,7 +85,6 @@ class DataBase:
         else:
             tables = [t for t in vars(self).values() if
                       hasattr(t, "table_name")]
-
         table_name = name.lower()
         if partial_name:
             return [tbl for tbl in tables

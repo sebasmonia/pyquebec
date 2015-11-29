@@ -106,7 +106,8 @@ class QueryBuilder():
             self._values[join_type].append(args)
         elif all((type(a) == tuple for a in args)):
             # assumes are all (col, col) tuples
-            self._values[join_type].extend(args)
+            for pair in args:
+                self._values[join_type].extend(pair)
         else:  # analyze arguments like From
             new_tables = self._resolve_table_arguments(args)
             if not new_tables:
