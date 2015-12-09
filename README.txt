@@ -11,16 +11,16 @@ Full documentation available in https://github.com/sebasmonia/pyquebec/wiki
 Sample:
 
 >>> from pyquebec import pyquebec
->>> from pyquebec import dataformatters as qf
+>>> from pyquebec import formatters as pf
 >>> pyquebec.add('SampleDB', 'connection string here', 'MSSQL') # first use
->>> db = pyquebec.open('SampleDB') # after using add, the db config is stored
+>>> db = pyquebec.open('SampleDB') # after using add, the db config and schema is cached
 >>> db.dbo.<TAB KEY>
 db.dbo.Table1  db.dbo.Table2
 db.dbo.Table3  db.dbo.Table4
 >>>result = db.dbo.Table1.From().go()
->>> qf.to_html(result)
+>>> pf.to_html(result)
 Creating and opening temp file C:\Users\smonia\AppData\Local\Temp\tmpn3g43ppp.htm
->>> qf.to_csv(result)
+>>> pf.to_csv(result)
 Creating and opening temp file C:\Users\smonia\AppData\Local\Temp\tmpe68shxd9.csv
 >>> result[0]
 row(column1=datetime.datetime(2015, 5, 13, 23, 34, 58, 77000), column2=59, column3=29, column4='Sample')
