@@ -6,7 +6,7 @@ with open('README.txt') as file:
 setup(
     name = 'pyquebec',
     packages = ['pyquebec'],
-    version = '0.9.0',
+    version = '0.9.1',
     description = 'A Python package to create simple SQL queries from the console, and quickly display the returned information.',
     long_description = long_description,
     author='Sebastián Monía',
@@ -17,9 +17,9 @@ setup(
         'pypyodbc',
         'tabulate'],
     keywords='SQL development console MSSQL SQLite',
-    package_data = { 
+    package_data = {
                     '' : ['*.txt', '*.md'],
-                    'pyquebec' : ['*.ini', '*.template', 'resources/*.*']
+                    'pyquebec' : ['*.ini', 'resources/*.*']
                    },
     classifiers=[
         'Programming Language :: Python',

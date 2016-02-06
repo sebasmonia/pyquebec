@@ -18,8 +18,7 @@ def to_html(data):
                     for f in fields) + '</tr>')
     header_footer_text = ''.join("<th>" + f + "</th>" for f in fields)
 
-    mark_up = ["""<TABLE id="tbResultSet" class="display" cellspacing="0"
-               width="100%">"""]
+    mark_up = ["""<TABLE id="tbResultSet" class="cell-border" cellspacing="0" width="100%">"""]
     mark_up.append('<thead><TR>')
     mark_up.append(header_footer_text)
     mark_up.append('</TR></thead>')
