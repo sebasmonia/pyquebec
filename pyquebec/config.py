@@ -4,6 +4,7 @@ import os.path
 import shutil
 
 _config_folder = os.path.join(os.path.expanduser("~"), ".pyquebec")
+_templates_folder = os.path.join(_config_folder, "templates")
 _config_file = os.path.join(_config_folder, "pyquebec.ini")
 _config = configparser.ConfigParser()
 _config.optionxform = str
@@ -43,9 +44,8 @@ def create_config_db(name, connection_string, engine):
 
 
 def _copy_template(name, engine):
-    module_install_dir = os.path.split(__file__)[0]
     template_name = engine + ".ini"
-    original = os.path.join(module_install_dir, 'templates', template_name)
+    original = os.path.join(_templates_folder, template_name)
     destination = os.path.join(_config_folder, name + ".ini")
     shutil.copy(original, destination)
     return destination

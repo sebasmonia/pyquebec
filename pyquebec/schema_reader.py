@@ -9,11 +9,11 @@ _cachecolumn = namedtuple('cachecolumn', ['schema', 'table', 'name'])
 
 def cache_schema(name, db_instance):
     engine_name = db_instance.config.engine
-    schema_objects = _loaders[engine_name](db_instance)
+    schema_objects = _loaders.get(engine_name, _load_queries_only)(db_instance)
     _serialize_schema(name, schema_objects)
 
 
-def _load_MSSQL(db):
+def _load_queries_only(db):
     queries = db.config.schema_queries
     schemas = db.exec_sql(queries['Schemas'])
     tables = db.exec_sql(queries['Tables'])
@@ -82,6 +82,6 @@ def _load_without_schema(cache):
 
 
 _loaders = {
-    "MSSQL": _load_MSSQL,
+    "MSSQL": _load_queries_only,
     "SQLite": _load_SQLite
 }
