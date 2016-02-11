@@ -4,7 +4,7 @@ from .schema_reader import cache_schema as _cache_schema
 from .schema_reader import read_schema_from_cache as _read_schema_from_cache
 
 
-def add(name, connection_string, engine):
+def add(name, connection_string, engine='default'):
     _create_config_db(name, connection_string, engine)
     return refresh_cache(name)
 
