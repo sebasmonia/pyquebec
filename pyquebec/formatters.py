@@ -13,7 +13,8 @@ _console_options = get_config_section("ConsoleOptions")
 def to_html(data):
     if not data:
         return
-    fields, formatter = _deduct_fields_formatter(data[0])
+    fields = data[0]._fields
+
     row_template = ('<tr>' + ''.join("<td>{" + f + "}</td>"
                     for f in fields) + '</tr>')
     header_footer_text = ''.join("<th>" + f + "</th>" for f in fields)
@@ -27,7 +28,7 @@ def to_html(data):
     mark_up.append('</TR></tfoot>')
     mark_up.append('<tbody>')
     for row in data:
-        mark_up.append(row_template.format_map(formatter(row)))
+        mark_up.append(row_template.format_map(row._asdict()))
     mark_up.append('</tbody>')
     mark_up.append("</TABLE>")
 
@@ -43,28 +44,10 @@ def to_html(data):
     os.startfile(htmlpath)
 
 
-def _deduct_fields_formatter(sample):
-    # this function is called after validation of at least one row present
-    fields = None
-    func = None
-
-    if type(sample) == dict:
-        fields = tuple(sample.keys())
-        func = lambda elem: elem  # identity
-    if isinstance(sample, tuple) and hasattr(sample, '_fields'):
-        fields = sample._fields  # named tuple
-        func = lambda elem: elem._asdict()
-    if type(sample) in (list, tuple):
-        fields = tuple("C" + str(n) for n in range(len(sample)))
-        func = lambda elem: dict(enumerate(elem))
-
-    return fields, func
-
-
 def to_csv(data):
     if not data:
         return
-    fields, formatter = _deduct_fields_formatter(data[0])
+    fields = data[0]._fields
     csvfile_handle, csvpath = tempfile.mkstemp(".csv", text=True)
     print("Creating and opening temp file", csvpath)
     with os.fdopen(csvfile_handle, mode="w", encoding="UTF-8",
@@ -72,7 +55,7 @@ def to_csv(data):
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         for row in data:
-            writer.writerow(formatter(row))
+            writer.writerow(row._asdict())
     os.startfile(csvpath)
 
 
@@ -80,19 +63,19 @@ def to_console(data):
     if not data:
         return
 
-    fields, dict_converter = _deduct_fields_formatter(data[0])
-    fields = [_console_column_formatter(f) for f in fields]
+    fields = [_console_column_formatter(f) for f in data[0]._fields]
     # a copy of the data, pre-formatted
+    data_as_dicts = [r._asdict() for r in data]
     formatted_data = []
-    for d in map(dict_converter, data):
+    for d in data_as_dicts:
         row = tuple(map(_console_column_formatter, d.values()))
         formatted_data.append(row)
     col_count = _console_cols_to_fit(fields, formatted_data)
     console_text = tabulate((x[:col_count] for x in formatted_data),
                             headers=fields)
     print(console_text)
-    print(col_count)
-
+    if col_count < len(fields):
+        print("\n", col_count, "out of", len(fields), " columns visible.")
 
 def _console_column_formatter(value):
     value = str(value)
