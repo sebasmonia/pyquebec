@@ -48,6 +48,10 @@ def _serialize_schema(name, objs):
 
 def read_schema_from_cache(name):
     cache_path = os.path.join(_cache_folder, name + ".schema")
+    if not os.path.isfile(cache_path):
+        m = ('No cached schema found for database "' + name + '". Check the '
+             'db name, or try pyquebec.open("' + name + '", False).')
+        raise ValueError(m)
     with open(cache_path) as c:
         cache = json.load(c)
     if cache['Schemas']:

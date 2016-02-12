@@ -18,6 +18,10 @@ def get_config_section(section_name):
 
 def get_db_config(name):
     ini_path = os.path.join(_config_folder, name + ".ini")
+    if not os.path.isfile(ini_path):
+        message = ('No configuration found for database "' + name + '". '
+                   'Check the db name, or call pyquebec.add first.')
+        raise ValueError(message)
     ini = configparser.ConfigParser()
     ini.optionxform = str
     ini.read(ini_path)
