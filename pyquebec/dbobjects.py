@@ -50,6 +50,9 @@ class Table:
         q = self.db_instance.new_query().From(self).left_join(table2)
         return q
 
+    def where(self, where_clause=None):
+        q = self.db_instance.new_query().From(self).where(where_clause)
+        return q
 
 class Column:
     _str_template = "Column {0} from {1}"
@@ -83,4 +86,9 @@ class Column:
         q = self.table.db_instance.new_query()
         q.From(self.table)
         q.left_join((self, field2))
+        return q
+
+    def where(self, where_clause=None):
+        q = self.table.db_instance.new_query()
+        q.From(self.table).select(self).where(where_clause)
         return q
