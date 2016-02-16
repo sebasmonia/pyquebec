@@ -14,8 +14,7 @@ setup(
     license='MIT',
     url='https://github.com/sebasmonia/pyquebec',
     install_requires=[
-        'pypyodbc',
-        'tabulate'],
+        'pypyodbc'],
     keywords='SQL development console MSSQL SQLite',
     package_data = {
                     '' : ['*.txt', '*.md'],
@@ -24,7 +23,7 @@ setup(
     classifiers=[
         'Programming Language :: Python',
         'Operating System :: OS Independent',
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: Information Technology',
@@ -34,6 +33,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: SQL',
         'Topic :: Database',
+        'Topic :: Database :: Front-Ends',
         'Topic :: Software Development',
         'Topic :: Utilities'
     ]

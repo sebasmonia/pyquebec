@@ -4,7 +4,6 @@ import os
 import csv
 import shutil
 from .config import get_config_section
-from tabulate import tabulate
 
 _html_options = get_config_section("HTMLOptions")
 _console_options = get_config_section("ConsoleOptions")
@@ -63,19 +62,26 @@ def to_console(data):
     if not data:
         return
 
-    fields = [_console_column_formatter(f) for f in data[0]._fields]
-    # a copy of the data, pre-formatted
-    data_as_dicts = [r._asdict() for r in data]
+    headers = data[0]._fields
+    formatted_headers = { f:_console_column_formatter(f) for f in headers }
     formatted_data = []
-    for d in data_as_dicts:
-        row = tuple(map(_console_column_formatter, d.values()))
-        formatted_data.append(row)
-    col_count = _console_cols_to_fit(fields, formatted_data)
-    console_text = tabulate((x[:col_count] for x in formatted_data),
-                            headers=fields)
-    print(console_text)
-    if col_count < len(fields):
-        print("\n", col_count, "out of", len(fields), " columns visible.")
+    for elem in data:
+        formatted = { key: _console_column_formatter(val) for key, val in elem._asdict().items() }
+        formatted_data.append(formatted)
+    col_lenghts, cols_to_display = _console_cols_to_fit(headers,formatted_headers, formatted_data)
+    format_strings = { h: "{:^" + str(col_lenghts[h]) + "}" for h in headers }
+    for h in headers[:cols_to_display]:
+        print((format_strings[h]).format(formatted_headers[h]), end= "|")
+    print()
+    for h in headers[:cols_to_display]:
+        print('-' * col_lenghts[h],end= "|")
+    print()
+    for row in formatted_data:
+        for h in headers[:cols_to_display]:
+            print((format_strings[h]).format(row[h]), end= "|")
+        print()
+    if cols_to_display < len(headers):
+        print("\n", cols_to_display, "out of", len(headers), " columns visible.")
 
 def _console_column_formatter(value):
     value = str(value)
@@ -85,20 +91,23 @@ def _console_column_formatter(value):
     return value
 
 
-def _console_cols_to_fit(fields, data):
-    cols, _ = shutil.get_terminal_size()
-    data_sizes = []
-    d = data[:]
-    d.append(fields)
-    for row in d:
-        data_sizes.append(len(str(col)) for col in row)
-    # print([x for x in (max(size) for size in zip(*data_sizes))])
-    col_sizes = (max(size) for size in zip(*data_sizes))
-    total_chars = 0
-    for ndx, size in enumerate(col_sizes):
-        total_chars += (size + 2)  # each column takes two extra chars
-        # print(ndx, size, total_chars, cols)
-        if total_chars > cols:
-            return ndx - 1
+def _console_cols_to_fit(headers, formatted_headers, data):
+    col_lenghts = {}
+    for h in headers:
+        lenght = max([len(x[h]) for x in data])
+        col_lenghts[h] = lenght
+
+    # check if header is wider than data
+    for k, v in col_lenghts.items():
+        if len(formatted_headers[k]) > v:
+            col_lenghts[k] = len(formatted_headers[k])
+
+    total_chars, _ = shutil.get_terminal_size()
+    chars_count = 1 # accounts for final EOL char
+    for col_index, col_name in enumerate(headers):
+        chars_count += (col_lenghts[col_name] + 1)  # each column takes one extra char
+        if chars_count > total_chars:
+            return col_lenghts, col_index
+
     else:
-        return len(fields)
+        return col_lenghts, len(headers)

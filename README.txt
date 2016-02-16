@@ -3,7 +3,6 @@ Helper to consume a database from the REPL.
 Dependencies:
 
 * pypyodbc
-* tabulate
 * Configuration files for each DB engine. Support for MSSQL and SQLite out of the box, and a "generic engine" option.
 
 Full documentation available in https://github.com/sebasmonia/pyquebec/wiki
