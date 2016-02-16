@@ -1,14 +1,16 @@
 from collections import namedtuple
 import configparser
 import os.path
+import os
 import shutil
 
 _config_folder = os.path.join(os.path.expanduser("~"), ".pyquebec")
 _templates_folder = os.path.join(_config_folder, "templates")
-_config_file = os.path.join(_config_folder, "pyquebec.ini")
+_config_file_name = "pyquebec.ini"
+_config_file_path = os.path.join(_config_folder, _config_file_name)
 _config = configparser.ConfigParser()
 _config.optionxform = str
-_config.read(_config_file)
+_config.read(_config_file_path)
 
 dbconfig = namedtuple("dbconfig", ['connection', 'engine', 'uses_schema',
                                    'schema_queries', 'query_templates'])
@@ -53,3 +55,8 @@ def _copy_template(name, engine):
     destination = os.path.join(_config_folder, name + ".ini")
     shutil.copy(original, destination)
     return destination
+
+def list_dbs():
+    configured_dbs = [f.split(".")[0] for f in
+                      os.listdir(_config_folder)
+                      if f.endswith(".ini") and f != _config_file_name]

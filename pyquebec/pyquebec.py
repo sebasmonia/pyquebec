@@ -1,5 +1,6 @@
 from .database import DataBase
 from .config import create_config_db as _create_config_db
+from .config import list_dbs as _list_dbs
 from .schema_reader import cache_schema as _cache_schema
 from .schema_reader import read_schema_from_cache as _read_schema_from_cache
 
@@ -23,5 +24,6 @@ def refresh_cache(name):
     return open(name)
 
 
-def list_databases():
-    pass
+def database_list():
+    return _list_dbs()
+

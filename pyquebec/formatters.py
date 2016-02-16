@@ -13,11 +13,9 @@ def to_html(data):
     if not data:
         return
     fields = data[0]._fields
-
     row_template = ('<tr>' + ''.join("<td>{" + f + "}</td>"
                     for f in fields) + '</tr>')
     header_footer_text = ''.join("<th>" + f + "</th>" for f in fields)
-
     mark_up = ["""<TABLE id="tbResultSet" class="cell-border" cellspacing="0" width="100%">"""]
     mark_up.append('<thead><TR>')
     mark_up.append(header_footer_text)
@@ -30,7 +28,6 @@ def to_html(data):
         mark_up.append(row_template.format_map(row._asdict()))
     mark_up.append('</tbody>')
     mark_up.append("</TABLE>")
-
     htmlfile_handle, htmlpath = tempfile.mkstemp(".htm", text=True)
     tmp = _html_options["Template_HTML"]
     tmp = tmp.replace("{{TABLE MARK UP}}", "\n".join(mark_up))
@@ -61,7 +58,6 @@ def to_csv(data):
 def to_console(data):
     if not data:
         return
-
     headers = data[0]._fields
     formatted_headers = { f:_console_column_formatter(f) for f in headers }
     formatted_data = []
@@ -96,18 +92,15 @@ def _console_cols_to_fit(headers, formatted_headers, data):
     for h in headers:
         lenght = max([len(x[h]) for x in data])
         col_lenghts[h] = lenght
-
     # check if header is wider than data
     for k, v in col_lenghts.items():
         if len(formatted_headers[k]) > v:
             col_lenghts[k] = len(formatted_headers[k])
-
     total_chars, _ = shutil.get_terminal_size()
     chars_count = 1 # accounts for final EOL char
     for col_index, col_name in enumerate(headers):
         chars_count += (col_lenghts[col_name] + 1)  # each column takes one extra char
         if chars_count > total_chars:
             return col_lenghts, col_index
-
     else:
         return col_lenghts, len(headers)
