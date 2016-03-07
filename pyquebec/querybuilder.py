@@ -1,5 +1,5 @@
-import sys
-
+from . import querybuilder_helpers as qbhelpers
+from . import formatters
 
 class QueryBuilder():
 
@@ -13,7 +13,7 @@ class QueryBuilder():
         self.db_instance = db_instance
         self._values = {}
         self._values['select'] = '*'
-        self._values['from'] = ''
+        self._values['from'] = []
         self._values['inner_join'] = []
         self._values['left_join'] = []
         self._values['where'] = ''
@@ -138,14 +138,14 @@ class QueryBuilder():
 
     def where(self, where_clause=None):
         if not where_clause:
-            where_clause = self._where_builder()
+            where_clause = qbhelpers.where_builder(self)
         self._values['where'] = where_clause
         return self
 
     def order_by(self, *args):
         if not args:
-            fields = self._field_picker()
-            self._values['order_by'] = self._sort_order_by(fields)
+            fields = qbhelpers.field_picker(self)
+            self._values['order_by'] = qbhelpers.sort_order_by(fields)
         elif len(args) == 1 and type(args[0]) == str:
             self._values["order_by"].append((args[0], ''))
         elif (len(args) == 2 and QueryBuilder._is_db_obj(args[0]) and
@@ -163,7 +163,7 @@ class QueryBuilder():
     def select(self, *args):
         fields = []
         if not args:
-            fields = self._field_picker()
+            fields = qbhelpers.field_picker(self)
         elif (len(args) == 1 and type(args[0]) == list  # assume list of Cols
               and all(QueryBuilder._is_db_obj(a) for a in args[0])):
             fields = args[0]
@@ -187,44 +187,21 @@ class QueryBuilder():
             all_cols.extend(tbl.columns().values())
         return all_cols
 
-    def _field_picker(self):
-        all_cols = self._all_columns_available()
-        for ndx, col in enumerate(all_cols, start=1):
-            print(ndx, '-', col._query_repr())
-        sel = input("Provide a comma-separated list of colums (ex: 1,2,5,8):")
-        sel = list(map(int, sel.split(',')))
-        return [col for ndx, col in enumerate(all_cols, start=1) if ndx in sel]
-
-    def _sort_order_by(self, fields):
-        result = []
-        print('For each field, indicate sort order: [A]sc or [D]esc.',
-              'Defaults to Asc.')
-        for col in fields:
-            order = input('Field ' + col._query_repr() + ': ASC or DESC? ')
-            if order in ('D', 'd'):
-                result.append((col, 'DESC'))
-            else:
-                result.append((col, 'ASC'))
-        return result
-
-    def _where_builder(self):
-        all_cols = {ndx: col for ndx, col in
-                    enumerate(self._all_columns_available(), start=1)}
-        for ndx, col in all_cols.items():
-            print(ndx, '-', col._query_repr())
-        msg = ("Provide the where clause. You can use {#} to refer to columns"
-               " and {var_name} to refer to any variable in your "
-               "environment (using format notation for list/dict elements)\n")
-        raw_where = input(msg)
-        for ndx, col in all_cols.items():
-            find_param = "{" + str(ndx) + "}"
-            raw_where = raw_where.replace(find_param, col._query_repr())
-        main = sys.modules['__main__']
-        return raw_where.format_map(vars(main))
-
     def go(self):
         s = self.preview()
         return self.db_instance.exec_sql(s)
+
+    def go_html(self):
+        results = self.go()
+        formatters.to_html(results)
+
+    def go_csv(self):
+        results = self.go()
+        formatters.to_csv(results)
+
+    def go_console(self):
+        results = self.go()
+        formatters.to_console(results)
 
     def __str__(self):
         return self.preview()

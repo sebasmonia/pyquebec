@@ -32,28 +32,3 @@ class TestQueryBuilder(unittest.TestCase):
         expected = "Artist.ArtistId"
         self.assertEqual(qrepr, expected)
 
-# import unittest
-# from unittest.mock import Mock, MagicMock
-# import pyquebec.dbobjects as dbobjects
-# import os
-# import pyquebec.database
-# import pyquebec.schema_reader as schema_reader
-# import pyquebec
-
-# class TestQueryBuilder(unittest.TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         mock_db = Mock()
-#         mock_db.db_name = 'TestDB'
-#         schema = dbobjects.Schema('TestSchema')
-#         table1 = dbobjects.Table(mock_db, schema, 'Table1', ['Col11', 'Col12', 'Col13'])
-#         table2 = dbobjects.Table(mock_db, schema, 'Table2', ['Col21', 'Col22', 'Col23'])
-#         table3 = dbobjects.Table(mock_db, schema, 'Table3', ['Col31', 'Col32', 'Col33'])
-#         cls._db = mock_db
-#         cls._tables = { 'Table1': table1, 'Table2': table2, 'Table3': table3 }
-
-#     def test_table_queryrepr(self):
-#         tbl = self._db.TestSchema.Table1
-#         qrepr = tbl._query_rpr()
-#         expected = "TestSchema.Table1"
-#         self.assertEqual(correct)

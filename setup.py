@@ -6,7 +6,7 @@ with open('README.txt') as file:
 setup(
     name = 'pyquebec',
     packages = ['pyquebec'],
-    version = '0.9.1',
+    version = '0.9.4',
     description = 'A Python package to create simple SQL queries from the console, and quickly display the returned information.',
     long_description = long_description,
     author='Sebastián Monía',

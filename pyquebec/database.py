@@ -9,6 +9,7 @@ class DataBase:
         self.db_name = name
         self.config = get_db_config(name)
         self.statement_history = []
+        self.qb_history = []
         self.has_schema_info = bool(cached_schema)
         if self.has_schema_info:
             self._load_schema(cached_schema)
@@ -59,7 +60,9 @@ class DataBase:
 
     def new_query(self):
         if self.has_schema_info:
-            return QueryBuilder(self)
+            qb = QueryBuilder(self)
+            self.qb_history.append(qb)
+            return qb
         else:
             print("Schema information not available")
 
