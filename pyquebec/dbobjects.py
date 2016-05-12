@@ -50,8 +50,8 @@ class Table:
         q = self.db_instance.new_query().From(self).left_join(table2)
         return q
 
-    def where(self, where_clause=None):
-        q = self.db_instance.new_query().From(self).where(where_clause)
+    def where(self, where_clause=None, vars_map=None):
+        q = self.db_instance.new_query().From(self).where(where_clause, vars_map)
         return q
 
 class Column:
@@ -88,7 +88,7 @@ class Column:
         q.left_join((self, field2))
         return q
 
-    def where(self, where_clause=None):
+    def where(self, where_clause=None, vars_map=None):
         q = self.table.db_instance.new_query()
-        q.From(self.table).select(self).where(where_clause)
+        q.From(self.table).select(self).where(where_clause, vars_map)
         return q

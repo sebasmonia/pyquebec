@@ -136,9 +136,9 @@ class QueryBuilder():
         matching_keys = set(t1_cols.keys()).intersection(t2_cols.keys())
         return [(t1_cols[key], t2_cols[key]) for key in matching_keys]
 
-    def where(self, where_clause=None):
+    def where(self, where_clause=None, vars_map=None):
         if not where_clause:
-            where_clause = qbhelpers.where_builder(self)
+            where_clause = qbhelpers.where_builder(self, vars_map)
         self._values['where'] = where_clause
         return self
 

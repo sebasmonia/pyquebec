@@ -57,6 +57,6 @@ def _copy_template(name, engine):
     return destination
 
 def list_dbs():
-    configured_dbs = [f.split(".")[0] for f in
-                      os.listdir(_config_folder)
-                      if f.endswith(".ini") and f != _config_file_name]
+    return [f.split(".")[0] for f in
+            os.listdir(_config_folder)
+            if f.endswith(".ini") and f != _config_file_name]
