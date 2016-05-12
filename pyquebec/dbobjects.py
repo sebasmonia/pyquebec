@@ -38,6 +38,10 @@ class Table:
     def __repr__(self):
         return self.__str__()
 
+    def select(self):
+        q = self.db_instance.new_query().select(self)
+        return q
+
     def From(self):
         q = self.db_instance.new_query().From(self)
         return q
@@ -70,6 +74,9 @@ class Column:
 
     def __repr__(self):
         return self.__str__()
+
+    def select(self):
+        return self.From()
 
     def From(self):
         q = self.table.db_instance.new_query()

@@ -61,37 +61,10 @@ class QueryBuilder():
         return ' '.join((select, From, joins, where, order_by))
 
     def From(self, *args):
-        tables = self._resolve_table_arguments(args)
-        if not tables:
-            print('From: Invalid arguments')
-            return
-        self._values['from'] = tables[0]
-        if len(tables) > 1:
-            self.inner_join(*tables[1:])
+        self._values['from'] = args[0]
+        if len(args) > 1:
+            self.inner_join(*args[1:])
         return self
-
-    def _resolve_table_arguments(self, arguments):
-        if len(arguments) == 1:
-            arg = arguments[0]
-            if QueryBuilder._is_db_obj(arg):
-                return [arg]  # comes from dbobject
-            if type(arg) == str:
-                return [self._find_table(arg)]
-            if type(arguments) == list:
-                return arguments
-        elif all(QueryBuilder._is_db_obj(a) for a in arguments):
-            # list of dbobj
-            return list(arguments)
-        else:
-            return None
-
-    def _find_table(self, str_name):
-        str_name = str_name.lower()
-        matches = self.db_instance.table_finder(str_name, partial_name=False)
-        if matches:
-            return [x for x in matches if x][0]
-        else:
-            raise ValueError("Not a valid table name")
 
     def inner_join(self, *args):
         return self._create_join('inner_join', *args)
@@ -100,41 +73,19 @@ class QueryBuilder():
         return self._create_join('left_join', *args)
 
     def _create_join(self, join_type, *args):
-        is_db = QueryBuilder._is_db_obj
-        if (len(args) == 2 and is_db(args[0]) and
-           is_db(args[1])):  # two Column objects
-            self._values[join_type].append(args)
-        elif all((type(a) == tuple for a in args)):
-            # assumes are all (col, col) tuples
-            for pair in args:
-                self._values[join_type].extend(pair)
-        else:  # analyze arguments like From
-            new_tables = self._resolve_table_arguments(args)
-            if not new_tables:
-                print(join_type, ": Invalid arguments")
-                return
-            if not self._values['from']:
-                self.From(new_tables[0])
-                new_tables = new_tables[1:]
-            main_table = self._values['from']
-            fields = []
-            for tbl in new_tables:
-                f1f2 = self.identify_join_colums(main_table, tbl)
-                if len(f1f2) != 1:
-                    print("Couldn't identify unique join column between",
-                          main_table, tbl, "- Candidates:",
-                          (f1f2 if f1f2 else 'None'))
-                    return  # aborts the call chaining
-                fields.append(f1f2[0])
-            else:  # will execute only if all fields were matched
-                self._values[join_type].extend(fields)
+        if not self._values['from']:
+            self.From(args[0])
+            new_tables = args[1:]
+        else:
+            new_tables = args
+        main_table = self._values['from']
+        fields = []
+        for tbl in new_tables:
+            f1f2 = qbhelpers.get_join_colums(main_table, tbl)
+            fields.append(f1f2)
+        else:
+            self._values[join_type].extend(fields)
         return self
-
-    def identify_join_colums(self, table1, table2):
-        t2_cols = table2.columns()
-        t1_cols = table1.columns()
-        matching_keys = set(t1_cols.keys()).intersection(t2_cols.keys())
-        return [(t1_cols[key], t2_cols[key]) for key in matching_keys]
 
     def where(self, where_clause=None, vars_map=None):
         if not where_clause:
@@ -144,7 +95,7 @@ class QueryBuilder():
 
     def order_by(self, *args):
         if not args:
-            fields = qbhelpers.field_picker(self)
+            fields = qbhelpers.field_picker(self._all_columns_available)
             self._values['order_by'] = qbhelpers.sort_order_by(fields)
         elif len(args) == 1 and type(args[0]) == str:
             self._values["order_by"].append((args[0], ''))
@@ -163,7 +114,7 @@ class QueryBuilder():
     def select(self, *args):
         fields = []
         if not args:
-            fields = qbhelpers.field_picker(self)
+            fields = qbhelpers.field_picker(self._all_columns_available)
         elif (len(args) == 1 and type(args[0]) == list  # assume list of Cols
               and all(QueryBuilder._is_db_obj(a) for a in args[0])):
             fields = args[0]
